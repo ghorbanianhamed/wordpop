@@ -569,15 +569,31 @@ function plusPanel(b) {
 }
 
 // Stripe.js must be loaded from Stripe itself (that's what keeps card details off our server).
+// Newest version first (it matches the API version the server uses), older ones as a fallback.
+const STRIPE_JS = ["https://js.stripe.com/endive/stripe.js", "https://js.stripe.com/dahlia/stripe.js", "https://js.stripe.com/v3/"];
 let stripeJs = null;
-function loadStripeJs() {
-  stripeJs ||= new Promise((resolve, reject) => {
-    const s = Object.assign(document.createElement("script"), { src: "https://js.stripe.com/v3/", async: true });
-    s.onload = () => resolve(window.Stripe);
-    s.onerror = () => { stripeJs = null; reject(new Error("Couldn't load the payment form – check your connection")); };
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = Object.assign(document.createElement("script"), { src, async: true });
+    s.onload = () => (window.Stripe ? resolve(window.Stripe) : reject(new Error("no Stripe")));
+    s.onerror = () => { s.remove(); reject(new Error("not found")); };
     document.head.appendChild(s);
   });
+}
+function loadStripeJs() {
+  stripeJs ||= (async () => {
+    for (const src of STRIPE_JS) {
+      try { return await loadScript(src); } catch { /* try the next one */ }
+    }
+    stripeJs = null;
+    throw new Error("Couldn't load the payment form – check your connection");
+  })();
   return stripeJs;
+}
+
+// Open Stripe's own payment page (also the fallback if the in-app form has a problem).
+async function openHostedCheckout(plan) {
+  location.href = (await api("/api/billing/checkout", { method: "POST", body: { plan, hosted: true } })).url;
 }
 
 // The payment form in a box over the app (Stripe embedded checkout).
@@ -586,7 +602,8 @@ async function openPaymentBox(plan, publishableKey) {
   overlay.className = "pay-overlay";
   overlay.innerHTML = `<div class="pay-box" role="dialog" aria-modal="true" aria-label="Get WordPop Plus">
     <button class="pay-close ghost small" type="button" aria-label="Close">✕</button>
-    <div id="pay-mount"><p class="center muted pad">Loading the secure payment form…</p></div></div>`;
+    <div id="pay-mount"><p class="center muted pad">Loading the secure payment form…</p></div>
+    <p class="center small pay-fallback"><a href="#" id="pay-hosted">Problem with the form? Open Stripe's payment page instead</a></p></div>`;
   document.body.appendChild(overlay);
   document.body.classList.add("no-scroll");
   let checkout = null;
@@ -597,10 +614,15 @@ async function openPaymentBox(plan, publishableKey) {
   const onKey = (e) => { if (e.key === "Escape") close(); };
   document.addEventListener("keydown", onKey);
   overlay.querySelector(".pay-close").onclick = close;
+  overlay.querySelector("#pay-hosted").onclick = (e) => {
+    e.preventDefault(); close(); openHostedCheckout(plan).catch((err) => toast(err.message));
+  };
   overlay.onclick = (e) => { if (e.target === overlay) close(); };
   try {
-    const Stripe = await loadStripeJs();
-    checkout = await Stripe(publishableKey).initEmbeddedCheckout({
+    const stripe = (await loadStripeJs())(publishableKey);
+    // Renamed in Stripe's 2026 versions: createEmbeddedCheckoutPage (new) / initEmbeddedCheckout (old).
+    const create = (stripe.createEmbeddedCheckoutPage || stripe.initEmbeddedCheckout).bind(stripe);
+    checkout = await create({
       fetchClientSecret: async () => (await api("/api/billing/checkout", { method: "POST", body: { plan } })).client_secret,
       onComplete: () => { close(); welcomeToPlus(); },
     });
@@ -615,7 +637,7 @@ function bindPlus() {
     const key = state.tts?.billing?.publishable_key;
     if (key) return openPaymentBox(btn.dataset.plan, key);
     btn.disabled = true; // no publishable key: Stripe's own payment page
-    try { location.href = (await api("/api/billing/checkout", { method: "POST", body: { plan: btn.dataset.plan } })).url; }
+    try { await openHostedCheckout(btn.dataset.plan); }
     catch (e) { toast(e.message); btn.disabled = false; }
   }));
   const manage = document.getElementById("plus-manage");
