@@ -3,6 +3,13 @@
 *.env
 !.env.example
 
+# Android / Google Play signing - keep these private, outside the repository
+*.keystore
+*.jks
+signing-key-info.txt
+*.aab
+*.apk
+
 # Python
 __pycache__/
 *.py[cod]
