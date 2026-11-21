@@ -130,6 +130,7 @@ WordPop shows it to you on your phone at the times you choose, then quizzes you 
 
 ### App, accounts and privacy
 - **Installable app (PWA)** – Home Screen icon, opens instantly from cache, updates itself on the next open, step-by-step iPhone install guide
+- **Ready for Google Play** – Digital Asset Links, an account-deletion page, store graphics and screenshots; the Play version hides WordPop Plus purchases (Google Play billing rules)
 - **Accounts & security** – bcrypt-hashed passwords, HTTP-only session cookies, **forgot-password emails** with one-time links (stored hashed, rate-limited), reset signs out other devices
 - **Privacy** – delete your account and all data in one tap; [Privacy](https://wordpopapp.onrender.com/privacy.html) and [Terms](https://wordpopapp.onrender.com/terms.html) pages
 - **Admin analytics** – sign-ups, weekly active users and day-1/7/28 retention
@@ -254,6 +255,9 @@ ruff check .
    `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_MONTHLY` and `STRIPE_PRICE_YEARLY`. Without them the voices are free.
    Add `STRIPE_PUBLISHABLE_KEY` too and the payment form opens in a box inside the app (embedded checkout).
    A restricted key with *Full access – except sensitive operations* is enough.
+7. **Google Play** (optional) – package the site as a Trusted Web Activity with PWABuilder and set
+   `ANDROID_PACKAGE_NAME` and `ANDROID_SHA256_CERT_FINGERPRINTS`. The full guide, store texts, graphics and
+   screenshots are in [docs/google-play](docs/google-play/README.md).
 
 > The *Send notifications* GitHub Actions workflow is an optional backup scheduler; it is disabled when
 > UptimeRobot is used, so reminders are never sent twice.
@@ -269,6 +273,7 @@ ruff check .
 | `ADMIN_EMAILS` | the admin statistics page (admins also get WordPop Plus) |
 | `AZURE_SPEECH_KEY`, `AZURE_SPEECH_REGION` | natural voices |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY`, `STRIPE_PUBLISHABLE_KEY` | WordPop Plus payments |
+| `ANDROID_PACKAGE_NAME`, `ANDROID_SHA256_CERT_FINGERPRINTS` | the Google Play app (Digital Asset Links) |
 | `PLUS_PRICE_MONTHLY_LABEL`, `PLUS_PRICE_YEARLY_LABEL`, `PLUS_TRIAL_DAYS`, `TTS_DAILY_LIMIT` | optional tuning (prices shown in the app, trial length, voice clips per user per day) |
 
 ## API
@@ -315,7 +320,7 @@ wordpop/
 │   └── tests/                 # 77 pytest tests (Stripe and Azure are faked)
 ├── frontend/                  # the PWA: index.html, app.js, sw.js, styles.css, icons, privacy & terms pages
 ├── scripts/                   # VAPID keys, icons, QR code, GitHub issues
-├── docs/                      # screenshots, QR code, roadmap
+├── docs/                      # screenshots, QR code, roadmap, Google Play guide and store assets
 ├── .github/workflows/         # CI (lint + tests) and backup scheduler
 ├── Dockerfile
 └── docker-compose.yml
@@ -333,7 +338,8 @@ wordpop/
 - [x] **WordPop Plus** – Stripe subscriptions, free trial, in-app payment, Customer Portal
 - [x] Import / export as CSV · Share to WordPop · select & delete many
 - [ ] Invite testers and track retention
-- [ ] Google Play (Trusted Web Activity), then the Apple App Store
+- [ ] Google Play (Trusted Web Activity) – ready to package, see [docs/google-play](docs/google-play/README.md)
+- [ ] Apple App Store
 - [ ] AI auto-fill (meaning, example, translation) for any language
 - [ ] "Say it" pronunciation practice
 - [ ] Sign in with Google / magic-link email

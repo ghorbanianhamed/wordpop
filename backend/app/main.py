@@ -3,7 +3,7 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -45,6 +45,23 @@ class AppFiles(StaticFiles):
         response = await super().get_response(path, scope)
         response.headers.setdefault("Cache-Control", "no-cache")
         return response
+
+@app.get("/.well-known/assetlinks.json", include_in_schema=False)
+def asset_links():
+    """Digital Asset Links: tells Android that the WordPop app on Google Play and this website
+    belong together, so the app opens full-screen without a browser address bar."""
+    s = get_settings()
+    if not (s.android_package_name and s.android_cert_fingerprints):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Not configured")
+    return [{
+        "relation": ["delegate_permission/common.handle_all_urls"],
+        "target": {
+            "namespace": "android_app",
+            "package_name": s.android_package_name,
+            "sha256_cert_fingerprints": s.android_cert_fingerprints,
+        },
+    }]
+
 
 if frontend.exists():
 
