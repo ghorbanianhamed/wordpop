@@ -1,5 +1,5 @@
 // WordPop service worker: instant start from cache + push notifications.
-const CACHE = "wordpop-v15";
+const CACHE = "wordpop-v16";
 const SHELL = ["/", "/index.html", "/styles.css", "/app.js", "/manifest.webmanifest", "/icons/icon-192.png"];
 
 self.addEventListener("install", (event) => {
@@ -25,7 +25,7 @@ async function isGenuine(res, url) {
   if (url.pathname.endsWith(".js")) return type.includes("javascript");
   if (url.pathname.endsWith(".css")) return type.includes("css");
   if (type.includes("text/html")) return (await res.clone().text()).includes('id="view"') ||
-    url.pathname.endsWith("privacy.html") || url.pathname.endsWith("terms.html");
+    ["privacy.html", "terms.html", "delete-account.html"].some((p) => url.pathname.endsWith(p));
   return true;
 }
 

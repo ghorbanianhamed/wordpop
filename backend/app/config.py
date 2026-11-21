@@ -62,6 +62,13 @@ class Settings:
         self.plus_price_monthly_label: str = os.getenv("PLUS_PRICE_MONTHLY_LABEL", "CA$0.99")
         self.plus_price_yearly_label: str = os.getenv("PLUS_PRICE_YEARLY_LABEL", "CA$9.99")
         self.plus_trial_days: int = int(os.getenv("PLUS_TRIAL_DAYS") or 7)
+        # Google Play app (Trusted Web Activity): its package name and the SHA-256 fingerprint(s)
+        # of its signing certificate (Play Console -> App integrity). Used for assetlinks.json.
+        self.android_package_name: str = os.getenv("ANDROID_PACKAGE_NAME", "").strip()
+        fingerprints = os.getenv("ANDROID_SHA256_CERT_FINGERPRINTS", "")
+        self.android_cert_fingerprints: list[str] = [
+            f.strip().upper() for f in fingerprints.split(",") if f.strip()
+        ]
         self.dictionary_api: str = os.getenv(
             "DICTIONARY_API", "https://api.dictionaryapi.dev/api/v2/entries/en/"
         )

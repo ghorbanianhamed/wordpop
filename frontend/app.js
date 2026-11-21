@@ -540,8 +540,23 @@ function bindImportExport() {
 
 const SAMPLE = "Hi! This is how your words will sound."; // free for everyone (same text on the server)
 
+// ---------- Google Play version ----------
+// The Play app (a Trusted Web Activity) opens WordPop with ?source=play, and Android sets the
+// referrer to android-app://<package>. Google Play's rules require Google's own billing for
+// subscriptions sold inside Play apps, so WordPop Plus isn't sold there (subscribers still have
+// it). Kept per session: the Play app shares Chrome's storage, so a lasting flag would also hide
+// the buttons on the website in Chrome.
+const PLAY_KEY = "wordpop.playApp";
+function detectPlayApp() {
+  const q = new URLSearchParams(location.search);
+  if (q.get("source") === "play" || document.referrer.startsWith("android-app://")) sessionStorageSet(PLAY_KEY, "1");
+  if (q.has("source")) { q.delete("source"); history.replaceState(null, "", location.pathname + (q.toString() ? `?${q}` : "") + location.hash); }
+}
+const inPlayApp = () => sessionStorageGet(PLAY_KEY) === "1";
+
 function plusPanel(b) {
   if (!b?.billing_enabled) return "";
+  if (inPlayApp()) return playPlusPanel(b);
   const date = (iso) => new Date(iso).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
   const buy = `<div class="row plus-buy">
       <button class="small" type="button" data-plan="monthly">${esc(b.prices.monthly)} / month</button>
@@ -566,6 +581,23 @@ function plusPanel(b) {
   return `<div class="plus-box"><p>Your free trial has ended. <b>Get WordPop Plus</b> to keep the natural voices –
     until then, your phone's voice reads your entries.</p>${buy}
     ${b.can_manage ? `<button class="ghost small" type="button" id="plus-manage">Manage subscription</button>` : ""}</div>`;
+}
+
+// In the Google Play app: show the status, never a way to buy.
+function playPlusPanel(b) {
+  if (b.reason === "admin" || b.reason === "subscription") {
+    return `<div class="plus-box"><p>⭐ <b>WordPop Plus</b> is active on your account.</p></div>`;
+  }
+  if (b.reason === "trial") {
+    const days = Math.max(1, Math.ceil((new Date(b.trial_ends_at) - Date.now()) / 86400000));
+    return `<div class="plus-box"><p>🎁 <b>Free trial of the natural voices</b> – ${days} day${days === 1 ? "" : "s"} left.</p></div>`;
+  }
+  if (!b.trial_started) {
+    return `<div class="plus-box"><p>🎁 <b>Try the natural voices free for ${b.trial_days} days.</b>
+      <span class="small muted">The trial starts the first time you tap Listen. Tap ▶ to hear each voice.</span></p></div>`;
+  }
+  return `<div class="plus-box"><p>Your free trial of the natural voices has ended, so your phone's voice reads your entries.
+    <span class="small muted">WordPop Plus can't be bought in this version of the app yet.</span></p></div>`;
 }
 
 // Stripe.js must be loaded from Stripe itself (that's what keeps card details off our server).
@@ -1171,5 +1203,6 @@ if ("serviceWorker" in navigator) {
 }
 // When a notification is tapped while the app is open, the service worker asks us to navigate.
 navigator.serviceWorker?.addEventListener("message", (e) => { if (e.data?.type === "navigate") location.hash = e.data.url.replace(/^\/?/, ""); });
+detectPlayApp();
 captureShare();
 render();

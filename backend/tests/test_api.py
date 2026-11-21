@@ -224,3 +224,22 @@ def test_manifest_offers_share_to_wordpop(client):
 def test_terms_and_privacy_pages(client):
     assert "WordPop Plus" in client.get("/terms.html").text
     assert "Stripe" in client.get("/privacy.html").text
+
+
+def test_asset_links_for_the_google_play_app(client, monkeypatch):
+    from app.config import get_settings
+
+    assert client.get("/.well-known/assetlinks.json").status_code == 404  # not set up yet
+    monkeypatch.setattr(get_settings(), "android_package_name", "com.onrender.wordpopapp.twa")
+    monkeypatch.setattr(get_settings(), "android_cert_fingerprints", ["AA:BB", "CC:DD"])
+    r = client.get("/.well-known/assetlinks.json")
+    assert r.status_code == 200 and r.headers["content-type"].startswith("application/json")
+    target = r.json()[0]["target"]
+    assert target == {"namespace": "android_app", "package_name": "com.onrender.wordpopapp.twa",
+                      "sha256_cert_fingerprints": ["AA:BB", "CC:DD"]}
+    assert r.json()[0]["relation"] == ["delegate_permission/common.handle_all_urls"]
+
+
+def test_account_deletion_page(client):
+    r = client.get("/delete-account.html")
+    assert r.status_code == 200 and "Delete my account" in r.text
