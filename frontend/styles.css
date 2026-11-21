@@ -135,6 +135,8 @@ details.help li + li { margin-top: 4px; }
 }
 .pay-close { position: absolute; top: 8px; right: 8px; color: #374151; border-color: #E5E7EB; background: #fff; }
 .no-scroll { overflow: hidden; }
+.pay-fallback { margin: 6px 0 4px; }
+.pay-fallback a { color: #6B7280; }
 .plus-buy button { flex: 1 1 140px; }
 .plus-buy .save { font-size: .75rem; opacity: .8; margin-left: 4px; }
 .voice-option { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 12px; cursor: pointer; }

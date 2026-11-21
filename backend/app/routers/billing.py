@@ -25,6 +25,7 @@ SUBSCRIPTION_EVENTS = (
 
 class CheckoutIn(BaseModel):
     plan: str = Field(pattern=r"^(monthly|yearly)$")
+    hosted: bool = False  # force Stripe's own payment page (fallback from the in-app form)
 
 
 def _require_billing() -> None:
@@ -53,7 +54,7 @@ def checkout(data: CheckoutIn, user: User = Depends(get_current_user), db: Sessi
         user.stripe_customer_id = customer["id"]
         db.commit()
 
-    embedded = bool(get_settings().stripe_publishable_key)
+    embedded = bool(get_settings().stripe_publishable_key) and not data.hosted
 
     def open_checkout():
         params = {
@@ -66,7 +67,7 @@ def checkout(data: CheckoutIn, user: User = Depends(get_current_user), db: Sessi
         }
         if embedded:  # the payment form opens in a box inside WordPop
             params.update({
-                "ui_mode": "embedded",
+                "ui_mode": "embedded_page",  # called "embedded" before Stripe's 2026 API versions
                 "redirect_on_completion": "if_required",
                 "return_url": f"{app_url}/#/settings?plus=success",
             })
