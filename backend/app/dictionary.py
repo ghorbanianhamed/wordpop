@@ -19,7 +19,7 @@ log = logging.getLogger("wordpop.dictionary")
 WIKTIONARY_API = "https://en.wiktionary.org/api/rest_v1/page/definition/"
 HEADERS = {
     # Some APIs (Wikimedia in particular) reject requests without a descriptive User-Agent.
-    "User-Agent": "WordPop/2.1 (vocabulary learning app; https://github.com/Ramvam63/wordpop)",
+    "User-Agent": "WordPop/2.2 (vocabulary learning app; https://github.com/ghorbanianhamed/wordpop)",
     "Accept": "application/json",
 }
 
