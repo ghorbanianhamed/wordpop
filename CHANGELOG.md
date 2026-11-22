@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 ### Added
+- **Rename categories and change their colour** on the Categories page (✎); a name you already use gets a clear message instead of an error
 - **Ready for Google Play** (Trusted Web Activity): `/.well-known/assetlinks.json` from `ANDROID_PACKAGE_NAME` / `ANDROID_SHA256_CERT_FINGERPRINTS`, an account-deletion page, the Play version detected from `?source=play` or the Android referrer (WordPop Plus isn't sold there; subscribers keep it), a step-by-step guide with store texts and Data safety answers, a feature graphic and six 1080×1920 screenshots in `docs/google-play/`
 - **WordPop Plus**: the natural voices become a subscription – CA$0.99/month or CA$9.99/year – after a 7-day free trial that starts with the first listen (no card needed). Payment through Stripe Checkout, "Manage subscription" through the Stripe Customer Portal, status kept in sync by a signed webhook. Samples in Settings stay free, admins always have Plus, deleting an account cancels its subscription, and without Stripe settings the voices stay free. New Terms page; Privacy page mentions Stripe and Azure
 - **Share to WordPop**: the installed app appears in the Share menu (Android, Chrome/Edge on computers) – shared text opens in "Add" ready to save, with links and quote marks removed, even if you have to sign in first. iPhone: Settings → Add from other apps explains a one-time Shortcut. Long-pressing the app icon offers "Add a word"
