@@ -20,6 +20,7 @@
 - **Natural voices**: four human-sounding English voices made on the server with Azure AI Speech – Clara (Canadian woman, default), Liam (Canadian man), Ava (American woman) and Andrew (American man). Pick one in Settings → Voice (▶ plays a sample); it reads entries and examples on every device. Each recording is made once and stored, so repeat listens are instant and free. The phone's own voice remains available and is the automatic fallback
 
 ### Fixed
+- Adding an entry: a **Cancel** button empties the form; the **Example** box takes several examples, one per line (Enter starts a new line instead of saving), and each shows on its own line
 - Editing an entry: categories you tap in the flashcard now look selected (dark brown with a ✓) – before, the choice was saved but the chips didn't change, so it looked like they couldn't be selected; the Save button is now easy to see on the amber card
 - In-app payment form showed "Something went wrong": it now uses Stripe's current names (`embedded_page` sessions, `createEmbeddedCheckoutPage`, versioned Stripe.js) with the older ones as a fallback, and the box offers a link to Stripe's own payment page if the form still has a problem
 - WordPop Plus checkout: if the saved Stripe customer no longer exists (e.g. after changing the Stripe key, or moving from test to live), a new one is created automatically instead of failing
