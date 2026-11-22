@@ -9,6 +9,11 @@ const state = { user: null, categories: [], installDismissed: sessionStorageGet(
 // ---------- helpers ----------
 function sessionStorageGet(k) { try { return sessionStorage.getItem(k); } catch { return null; } }
 function sessionStorageSet(k, v) { try { sessionStorage.setItem(k, v); } catch { /* ignore */ } }
+// Remembered on this device only (no email or account details): "someone has signed in here before".
+const SIGNED_IN_KEY = "wordpop.signedInBefore";
+const hasSignedInHere = () => { try { return localStorage.getItem(SIGNED_IN_KEY) === "1"; } catch { return false; } };
+const rememberSignedInHere = () => { try { localStorage.setItem(SIGNED_IN_KEY, "1"); } catch { /* private mode */ } };
+const forgetSignedInHere = () => { try { localStorage.removeItem(SIGNED_IN_KEY); } catch { /* private mode */ } };
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -127,7 +132,8 @@ screens["/login"] = async () => {
     });
     return;
   }
-  let mode = sessionStorageGet("authMode") || "signup";
+  // Someone who has signed in on this device before starts on "Sign in"; everyone else on "Create account".
+  let mode = sessionStorageGet("authMode") || (hasSignedInHere() ? "login" : "signup");
   const draw = () => {
     $view.innerHTML = `
       <div class="card stack">
@@ -156,6 +162,7 @@ screens["/login"] = async () => {
       if (mode === "signup") body.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
       try {
         state.user = await api(`/api/auth/${mode}`, { method: "POST", body });
+        rememberSignedInHere();
         await loadCategories();
         location.hash = mode === "signup" ? "#/welcome" : "#/words";
       } catch (ex) {
@@ -221,6 +228,7 @@ screens["/reset"] = async ({ params }) => {
     if (pw !== pw2) { err.textContent = "The two passwords don't match."; err.hidden = false; return; }
     try {
       state.user = await api("/api/auth/reset-password", { method: "POST", body: { token, password: pw } });
+      rememberSignedInHere();
       toast("Password changed ✓ You're signed in.");
       location.hash = "#/words";
     } catch (ex) {
@@ -1074,7 +1082,8 @@ screens["/settings"] = async ({ params } = {}) => {
   document.getElementById("delete-account").onclick = async (e) => {
     const b = e.currentTarget;
     if (!b.dataset.armed) { b.dataset.armed = "1"; b.textContent = "Tap again to permanently delete everything"; return; }
-    await api("/api/auth/me", { method: "DELETE" }); state.user = null; state.tts = null; toast("Account deleted"); location.hash = "#/login";
+    await api("/api/auth/me", { method: "DELETE" }); state.user = null; state.tts = null; forgetSignedInHere();
+    toast("Account deleted"); location.hash = "#/login";
   };
 };
 
@@ -1191,7 +1200,7 @@ async function render() {
   const r = route();
   const publicRoute = ["/login", "/forgot", "/reset"].includes(r.path);
   if (!state.user && !publicRoute) {
-    try { state.user = await api("/api/auth/me"); }
+    try { state.user = await api("/api/auth/me"); rememberSignedInHere(); }
     catch (e) {
       if (e.status === 401) { location.hash = "#/login"; return; }
       // Server unreachable: keep the user signed in and offer a retry instead of the login page.
