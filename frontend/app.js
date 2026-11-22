@@ -280,10 +280,12 @@ screens["/words"] = async ({ params }) => {
           <button type="button" class="secondary" id="lookup" title="English dictionary">Look up</button></div>
         <div><label for="w-meaning">Meaning or note <span class="muted small">(optional – English words can be filled automatically)</span></label>
           <textarea id="w-meaning" rows="2"></textarea></div>
-        <div><label for="w-example">Example <span class="muted small">(optional)</span></label><input id="w-example" /></div>
+        <div><label for="w-example">Example <span class="muted small">(optional – press Enter for another example)</span></label>
+          <textarea id="w-example" rows="2" autocapitalize="sentences"></textarea></div>
         <div><label>Categories</label>${catChips([], "newcat")}</div>
         <p class="error" id="add-err" hidden></p>
-        <button class="block" type="submit">Save word</button>
+        <div class="row add-actions"><button class="grow" type="submit">Save word</button>
+          <button class="ghost" type="button" id="add-cancel">Cancel</button></div>
       </form>
     </div>
     <div id="notif-ask"></div>
@@ -306,6 +308,15 @@ screens["/words"] = async ({ params }) => {
 
   bindToggleChips($view, "newcat");
   const text = document.getElementById("w-text"), meaning = document.getElementById("w-meaning"), example = document.getElementById("w-example");
+
+  // Cancel: empty the form and start again (nothing is saved).
+  document.getElementById("add-cancel").onclick = () => {
+    text.value = ""; meaning.value = ""; example.value = "";
+    $view.querySelectorAll('[data-newcat][aria-pressed="true"]').forEach((c) => c.setAttribute("aria-pressed", "false"));
+    document.getElementById("add-err").hidden = true;
+    $view.querySelector(".share-note")?.remove();
+    text.blur(); toast("Cleared");
+  };
 
   const shared = takeShared();
   if (shared) {
@@ -483,7 +494,9 @@ function sayText(text, lang) {
 function exampleHtml(w, attr) {
   if (!w.example) return "";
   const btn = canSpeak || naturalVoice() ? ` <button class="ghost small say" ${attr} aria-label="Listen to the example">🔊</button>` : "";
-  return `<i dir="auto">“${esc(w.example)}”</i>${btn}`;
+  // Several examples (one per line) each get their own quotation marks and line.
+  const lines = w.example.split("\n").map((l) => l.trim()).filter(Boolean);
+  return `<i dir="auto">${lines.map((l) => `“${esc(l)}”`).join("<br>")}</i>${btn}`;
 }
 function listen(w) {
   const english = (w.lang || "en").startsWith("en");
@@ -762,7 +775,7 @@ function bindWordItems(words, params) {
     box.innerHTML = `
       <div><label>Text</label><textarea data-f="text" rows="2" maxlength="500">${esc(w.text)}</textarea></div>
       <div><label>Meaning or note</label><textarea data-f="meaning">${esc(w.meaning)}</textarea></div>
-      <div><label>Example</label><input data-f="example" value="${esc(w.example)}" /></div>
+      <div><label>Examples <span class="muted small">(one per line)</span></label><textarea data-f="example" rows="2" autocapitalize="sentences">${esc(w.example)}</textarea></div>
       <div><label>Categories</label>${catChips(w.categories.map((c) => c.id), "editcat")}</div>
       <div class="row"><button class="small" data-save>Save</button><button class="ghost small" data-cancel>Cancel</button></div>`;
     bindToggleChips(box, "editcat");

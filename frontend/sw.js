@@ -1,5 +1,5 @@
 // WordPop service worker: instant start from cache + push notifications.
-const CACHE = "wordpop-v19";
+const CACHE = "wordpop-v20";
 const SHELL = ["/", "/index.html", "/styles.css", "/app.js", "/manifest.webmanifest", "/icons/icon-192.png"];
 
 self.addEventListener("install", (event) => {

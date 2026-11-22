@@ -115,6 +115,7 @@ button.small { min-height: 34px; padding: 6px 10px; font-size: .85rem; }
 #list.selecting .word-item summary { justify-content: flex-start; }
 #list.selecting .word-item summary .box-badge { margin-left: auto; }
 .select-bar { margin-bottom: 8px; }
+.add-actions button[type="submit"] { flex: 1 1 auto; }
 .cat-edit { background: var(--brand-soft); border-radius: 12px; padding: 12px; margin: 6px 0; }
 details.help { border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; }
 details.help summary { cursor: pointer; }
