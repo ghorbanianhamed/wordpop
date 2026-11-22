@@ -163,6 +163,11 @@ button.say { padding: 2px 8px; margin-left: 4px; vertical-align: middle; font-st
 .word-item[open] .card-back { margin-top: 16px; padding-top: 16px; border-top: 2px dashed rgba(59, 35, 0, .3); font-size: 1.05rem; }
 .word-item[open] .chips, .word-item[open] .card-actions { justify-content: center; }
 .word-item[open] .chip { background: rgba(255, 255, 255, .55); border-color: transparent; color: var(--on-accent); }
+/* In the edit form: a selected category must look selected (dark brown with a tick), not like the others. */
+.word-item[open] button.chip[aria-pressed="true"] { background: var(--brown); color: var(--on-brown); border-color: var(--brown); }
+.word-item[open] button.chip[aria-pressed="true"]::before { content: "✓"; font-weight: 700; margin-right: 2px; }
+/* The main button (Save) in a flashcard: brown, so it stands out on the amber card. */
+.word-item[open] .card-back button:not(.ghost):not(.danger):not(.chip):not(.say) { background: var(--brown); color: var(--on-brown); }
 .word-item[open] button.ghost { color: var(--on-accent); border-color: rgba(59, 35, 0, .3); background: rgba(255, 255, 255, .35); }
 .word-item[open] button.danger { color: #8A2A0C; border-color: rgba(59, 35, 0, .3); background: rgba(255, 255, 255, .35); }
 .word-item[open] input, .word-item[open] textarea { text-align: left; }
