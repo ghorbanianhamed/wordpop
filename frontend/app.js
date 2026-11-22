@@ -798,11 +798,12 @@ screens["/categories"] = async () => {
         <label class="switch" title="Notifications"><input type="checkbox" id="notify-uncategorized" ${settings.notify_uncategorized ? "checked" : ""} aria-label="Notifications for entries without a category" /><span></span></label>
       </div>
       ${state.categories.length ? state.categories.map((c) => `
-        <div class="row between word-item">
+        <div class="row between word-item" data-catrow="${c.id}">
           <a class="grow row" href="#/words?category=${c.id}" style="color:inherit;text-decoration:none">
             <span class="dot" style="background:${esc(c.color)}"></span><b>${esc(c.name)}</b>
             <span class="muted small">${c.word_count} ${c.word_count === 1 ? "entry" : "entries"}</span></a>
           <label class="switch" title="Notifications"><input type="checkbox" data-notify="${c.id}" ${c.notify ? "checked" : ""} aria-label="Notifications for ${esc(c.name)}" /><span></span></label>
+          <button class="ghost small" data-editcat="${c.id}" aria-label="Rename ${esc(c.name)}" title="Rename or change colour">✎</button>
           <button class="danger small" data-delcat="${c.id}" aria-label="Delete ${esc(c.name)}">✕</button>
         </div>`).join("") : `<p class="muted">No categories yet.</p>`}
     </div>`;
@@ -826,6 +827,32 @@ screens["/categories"] = async () => {
   $view.querySelectorAll("[data-delcat]").forEach((b) => (b.onclick = async () => {
     if (!confirmInline(b)) return;
     await api(`/api/categories/${b.dataset.delcat}`, { method: "DELETE" }); toast("Category deleted (words kept)"); screens["/categories"]();
+  }));
+  // Rename / change colour: the row turns into a small form.
+  $view.querySelectorAll("[data-editcat]").forEach((b) => (b.onclick = () => {
+    const c = state.categories.find((x) => x.id === Number(b.dataset.editcat));
+    const row = $view.querySelector(`[data-catrow="${c.id}"]`);
+    const palette = colors.includes(c.color) ? colors : [c.color, ...colors];
+    row.outerHTML = `<form class="stack word-item cat-edit" data-catform="${c.id}">
+        <label class="small muted" for="rename-${c.id}">Category name</label>
+        <input id="rename-${c.id}" value="${esc(c.name)}" required maxlength="60" />
+        <div class="chips">${palette.map((col) => `<button type="button" class="chip" data-editcolor="${col}" aria-pressed="${col === c.color}" aria-label="Color ${col}"><span class="dot" style="background:${col}"></span></button>`).join("")}</div>
+        <div class="row"><button class="small" type="submit">Save</button><button class="ghost small" type="button" data-cancel>Cancel</button></div>
+      </form>`;
+    const form = $view.querySelector(`[data-catform="${c.id}"]`), input = form.querySelector("input");
+    input.focus(); input.select();
+    const chips = form.querySelectorAll("[data-editcolor]");
+    chips.forEach((ch) => (ch.onclick = () => chips.forEach((x) => x.setAttribute("aria-pressed", x === ch))));
+    form.querySelector("[data-cancel]").onclick = () => screens["/categories"]();
+    form.onkeydown = (e) => { if (e.key === "Escape") screens["/categories"](); };
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const color = form.querySelector('[data-editcolor][aria-pressed="true"]').dataset.editcolor;
+      try {
+        await api(`/api/categories/${c.id}`, { method: "PATCH", body: { name: input.value, color } });
+        toast("Category saved ✓"); screens["/categories"]();
+      } catch (ex) { toast(ex.message); input.focus(); }
+    };
   }));
 };
 

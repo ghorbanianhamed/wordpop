@@ -62,7 +62,20 @@ def update_category(
     db: Session = Depends(get_db),
 ):
     cat = _get(db, user, category_id)
-    for field, value in data.model_dump(exclude_none=True).items():
+    changes = data.model_dump(exclude_none=True)
+    if "name" in changes:
+        name = changes["name"].strip()
+        if not name:
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Give the category a name")
+        taken = db.scalar(
+            select(Category).where(
+                Category.user_id == user.id, func.lower(Category.name) == name.lower(), Category.id != cat.id
+            )
+        )
+        if taken:
+            raise HTTPException(status.HTTP_409_CONFLICT, "You already have a category with this name")
+        changes["name"] = name
+    for field, value in changes.items():
         setattr(cat, field, value.strip() if isinstance(value, str) else value)
     db.commit()
     return _out(cat, len(cat.words))

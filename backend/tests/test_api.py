@@ -243,3 +243,15 @@ def test_asset_links_for_the_google_play_app(client, monkeypatch):
 def test_account_deletion_page(client):
     r = client.get("/delete-account.html")
     assert r.status_code == 200 and "Delete my account" in r.text
+
+
+def test_rename_and_recolour_a_category(user_client):
+    fr = user_client.post("/api/categories", json={"name": "French Basics"}).json()
+    user_client.post("/api/categories", json={"name": "Work"})
+    r = user_client.patch(f"/api/categories/{fr['id']}", json={"name": "  My French  ", "color": "#2563EB"})
+    assert r.status_code == 200 and r.json()["name"] == "My French" and r.json()["color"] == "#2563EB"
+    # only the case changes: allowed
+    assert user_client.patch(f"/api/categories/{fr['id']}", json={"name": "my french"}).status_code == 200
+    # a name that's already used, or only spaces: a clear message, not a crash
+    assert user_client.patch(f"/api/categories/{fr['id']}", json={"name": "work"}).status_code == 409
+    assert user_client.patch(f"/api/categories/{fr['id']}", json={"name": "   "}).status_code == 422
